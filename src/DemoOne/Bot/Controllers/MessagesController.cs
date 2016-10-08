@@ -21,13 +21,35 @@ namespace DemoOne
 		{
 			if (activity.Type == ActivityTypes.Message)
 			{
-				ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-				// calculate something for us to return
-				int length = (activity.Text ?? string.Empty).Length;
+				if (activity.MentionsRecipient())
+				{
+					ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
 
-				// return our reply to the user
-				Activity reply = activity.CreateReply($"You sent {activity.Text} which was {length} characters");
-				await connector.Conversations.ReplyToActivityAsync(reply);
+					// Show typing while performing lookups
+					var typingActivity = activity.CreateReply();
+					typingActivity.Type = ActivityTypes.Typing;
+					await connector.Conversations.ReplyToActivityAsync(typingActivity);
+
+					// Remove the mention from the activity text
+					var cityName = activity.Text.ToUpper().Replace("@" + activity.Recipient.Name.ToUpper(), string.Empty).Trim();
+
+					var locatorService = new GeoLocatorService.GeoService();
+					var matches = await locatorService.FindCoordinates(cityName);
+
+					if (matches.Count > 0)
+					{
+						var weather = new WeatherService.WeatherService();
+						var current = await weather.GetCurrentConditions(matches[0].Latitude, matches[0].Longitude);
+
+						var reply = activity.CreateReply($"The current conditions for {matches[0].CityState} are {current.Summary} and {current.CurrentTemp}.");
+
+						await connector.Conversations.ReplyToActivityAsync(reply);
+					}
+					else
+					{
+						await connector.Conversations.ReplyToActivityAsync(activity.CreateReply("Couldn't find any weather!"));
+					}
+				}
 			}
 			else
 			{

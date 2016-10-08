@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DarkSkyApi.Models;
+using DarkSkyApi;
 
 namespace WeatherService
 {
@@ -52,9 +54,9 @@ namespace WeatherService
             return info;
         }
 
-        private static async Task<DarkSkyApi.Models.Forecast> GetDarkSkyForecast(double lat, double longitude)
+        private static async Task<Forecast> GetDarkSkyForecast(double lat, double longitude)
         {
-            var ds = new DarkSkyApi.DarkSkyService("8703082d49387d351564670982b3bc7c");
+            var ds = new DarkSkyService("");
             var forecast = await ds.GetWeatherDataAsync(lat, longitude);
             return forecast;
         }
@@ -65,7 +67,7 @@ namespace WeatherService
 
             var theDate = forecast.Daily.Days.FirstOrDefault(ddp => ddp.PrecipitationType.Equals(precipType.ToString()));
 
-			return DateTimeOffset.Now;
+			return theDate?.Time ?? DateTimeOffset.MinValue;
         }
     }
 }
