@@ -5,36 +5,52 @@ using System.Threading.Tasks;
 using System.Web;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
+using GeoLocatorService;
 
 namespace DemoTwo.Dialogs
 {
-    public class LocationDialog : IDialog<string>
-    {
-        public async Task StartAsync(IDialogContext context)
-        {
-            context.Wait<List<GeoLocatorService.CoordinateInfo>>(MessageReceived);
-        }
+	[Serializable]
+	public class LocationDialog : IDialog<string>
+	{
+		public async Task StartAsync(IDialogContext context)
+		{
+			context.Wait<List<CoordinateInfo>>(MessageReceived);
+		}
 
-        public async Task MessageReceived(IDialogContext context, IAwaitable<List<GeoLocatorService.CoordinateInfo>> coordinates)
-        {
-            // Wait for the incoming
-            var theCoords = await coordinates;
+		public async Task MessageReceived(IDialogContext context, IAwaitable<List<CoordinateInfo>> coordinates)
+		{
+			// Wait for the incoming
+			var theCoords = await coordinates;
 
-            var pickList = new List<string>();
-            foreach (var coord in theCoords)
-            {
-                pickList.Add(coord.CityState);
-            }
-            PromptOptions<string> allOptions = new PromptOptions<string>("More than one city found, pick one:", null, null, pickList);
+			var cityHero = new HeroCard();
+			cityHero.Title = "Which city?";
+			cityHero.Subtitle = $"Multiple cities found";
+			cityHero.Text = "Select which city you want the weather for:";
+			cityHero.Buttons = new List<CardAction>();
 
-            PromptDialog.Choice<string>(context, PromptDone, allOptions);
-        }
+			foreach (var city in theCoords)
+			{
+				var cityAction = new CardAction();
+				cityAction.Type = ActionTypes.PostBack;
+				cityAction.Value = city.CityState;
+				cityAction.Title = city.CityState;
 
-        public async Task PromptDone(IDialogContext context, IAwaitable<string> cityName)
-        {
-            var city = await cityName;
+				cityHero.Buttons.Add(cityAction);
+			}
 
-            context.Done(city);
-        }
-    }
+			var cityHeroReply = context.MakeMessage();
+			cityHeroReply.Attachments = new List<Attachment>();
+			cityHeroReply.Attachments.Add(cityHero.ToAttachment());
+
+			await context.PostAsync(cityHeroReply);
+			context.Wait<string>(PromptDone);
+		}
+
+		public async Task PromptDone(IDialogContext context, IAwaitable<string> cityName)
+		{
+			var city = await cityName;
+
+			context.Done(city);
+		}
+	}
 }

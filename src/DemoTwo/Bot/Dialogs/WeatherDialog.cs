@@ -9,67 +9,71 @@ using WeatherService;
 
 namespace DemoTwo.Dialogs
 {
-    [Serializable]
-    public class WeatherDialog : IDialog<object>
-    {
-        public async Task StartAsync(IDialogContext context)
-        {
-            context.Wait(MessageReceivedAsync);
-        }
+	[Serializable]
+	public class WeatherDialog : IDialog<object>
+	{
+		public async Task StartAsync(IDialogContext context)
+		{
+			context.Wait(MessageReceivedAsync);
+		}
 
-        public async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> argument)
-        {
-            // Get the message out
-            var message = await argument;
-            var activityMessage = message as Activity;
+		public async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> argument)
+		{
+			// Get the message out
+			var message = await argument;
+			var activityMessage = message as Activity;
 
-            if (activityMessage.MentionsRecipient())
-            {
-                var geo = new GeoLocatorService.GeoService();
-                var matches = await geo.FindCoordinates(activityMessage.RemoveRecipientMention());
+			if (activityMessage.MentionsRecipient())
+			{
+				var geo = new GeoLocatorService.GeoService();
+				var matches = await geo.FindCoordinates(activityMessage.RemoveRecipientMention());
 
-                if (matches.Count > 1)
-                {
-                    await context.Forward(new LocationDialog(), LocationPicked, matches, new System.Threading.CancellationToken());
-                }
-                else if (matches.Count == 1)
-                {
-                    var weather = await DisplayWeather(matches[0]);
-                    await context.PostAsync($"The current conditions for {activityMessage.RemoveRecipientMention()} are {weather.Summary} and {weather.CurrentTemp}");
-                }
-                else
-                {
-                    await context.PostAsync($"Could not find the weather for {activityMessage.RemoveRecipientMention()}");
-                }
+				if (matches.Count > 1)
+				{
+					var allCities = new List<string>();
+					foreach (var city in matches)
+					{
+						allCities.Add(city.CityState);
+					}
+					PromptDialog.Choice<string>(context, LocationPicked, allCities, "Multiple matches found, pick one");
 
-                context.Wait(MessageReceivedAsync);
-            }
-        }
+					//await context.Forward(new LocationDialog(), LocationPicked, matches, new System.Threading.CancellationToken());
+				}
+				else if (matches.Count == 1)
+				{
+					await DisplayWeather(context, matches[0]);
+					context.Wait(MessageReceivedAsync);
+				}
+				else
+				{
+					await context.PostAsync($"Could not find the weather for {activityMessage.RemoveRecipientMention()}");
+					context.Wait(MessageReceivedAsync);
+				}
+			}
+		}
 
-        public async Task LocationPicked(IDialogContext context, IAwaitable<string> argument)
-        {
-            var location = await argument;
+		// Callback for when a location has been picked
+		public async Task LocationPicked(IDialogContext context, IAwaitable<string> argument)
+		{
+			var location = await argument;
 
-            var geo = new GeoLocatorService.GeoService();
-            var city = (await geo.FindCoordinates(location)).First();
-            var weather = await DisplayWeather(city);
+			var geo = new GeoLocatorService.GeoService();
+			var city = (await geo.FindCoordinates(location)).First();
+			await DisplayWeather(context, city);
 
-            await context.PostAsync($"The current conditions for {city} are {weather.Summary} and {weather.CurrentTemp}");
-            context.Wait(MessageReceivedAsync);
-        }
+			context.Wait(MessageReceivedAsync);
+		}
 
-        async Task<WeatherInfo> DisplayWeather(GeoLocatorService.CoordinateInfo coord)
-        {
-            var weatherService = new WeatherService.WeatherService();
-            var forecast = await weatherService.GetCurrentConditions(coord.Latitude, coord.Longitude);
+		#region Find weather and display
 
-            return forecast;
-        }
+		async Task DisplayWeather(IDialogContext context, GeoLocatorService.CoordinateInfo coord)
+		{
+			var weatherService = new WeatherService.WeatherService();
+			var forecast = await weatherService.GetCurrentConditions(coord.Latitude, coord.Longitude);
 
-        bool MentionsRecipient(IMessageActivity activity)
-        {
-            return activity.GetMentions().Any(a => a.Text.Equals(activity.Recipient.Name, StringComparison.OrdinalIgnoreCase));
-        }
+			await context.PostAsync($"The current conditions for {coord.CityState} are {forecast.Summary} and {forecast.CurrentTemp}.");
+		}
 
-    }
+		#endregion
+	}
 }
