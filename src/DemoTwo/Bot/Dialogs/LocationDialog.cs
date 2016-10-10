@@ -22,28 +22,14 @@ namespace DemoTwo.Dialogs
 			// Wait for the incoming
 			var theCoords = await coordinates;
 
-			var cityHero = new HeroCard();
-			cityHero.Title = "Which city?";
-			cityHero.Subtitle = $"Multiple cities found";
-			cityHero.Text = "Select which city you want the weather for:";
-			cityHero.Buttons = new List<CardAction>();
-
+			var allCities = new List<string>();
 			foreach (var city in theCoords)
 			{
-				var cityAction = new CardAction();
-				cityAction.Type = ActionTypes.PostBack;
-				cityAction.Value = city.CityState;
-				cityAction.Title = city.CityState;
-
-				cityHero.Buttons.Add(cityAction);
+				allCities.Add(city.CityState);
 			}
 
-			var cityHeroReply = context.MakeMessage();
-			cityHeroReply.Attachments = new List<Attachment>();
-			cityHeroReply.Attachments.Add(cityHero.ToAttachment());
-
-			await context.PostAsync(cityHeroReply);
-			context.Wait<string>(PromptDone);
+			PromptDialog.Choice<string>(context, PromptDone, allCities, "Multiple matching cities found, pick one:",
+				"I didn't get that, please enter that again", 2);
 		}
 
 		public async Task PromptDone(IDialogContext context, IAwaitable<string> cityName)

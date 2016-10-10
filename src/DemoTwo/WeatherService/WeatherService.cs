@@ -56,7 +56,7 @@ namespace WeatherService
 
         private static async Task<Forecast> GetDarkSkyForecast(double lat, double longitude)
         {
-            var ds = new DarkSkyService("6dea42df02299a5489f80299cfcb5c29");
+            var ds = new DarkSkyService("");
             var forecast = await ds.GetWeatherDataAsync(lat, longitude);
             return forecast;
         }

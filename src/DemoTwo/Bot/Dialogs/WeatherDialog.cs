@@ -30,14 +30,7 @@ namespace DemoTwo.Dialogs
 
 				if (matches.Count > 1)
 				{
-					var allCities = new List<string>();
-					foreach (var city in matches)
-					{
-						allCities.Add(city.CityState);
-					}
-					PromptDialog.Choice<string>(context, LocationPicked, allCities, "Multiple matches found, pick one");
-
-					//await context.Forward(new LocationDialog(), LocationPicked, matches, new System.Threading.CancellationToken());
+					await context.Forward(new LocationDialog(), LocationPicked, matches, new System.Threading.CancellationToken());
 				}
 				else if (matches.Count == 1)
 				{
@@ -49,6 +42,10 @@ namespace DemoTwo.Dialogs
 					await context.PostAsync($"Could not find the weather for {activityMessage.RemoveRecipientMention()}");
 					context.Wait(MessageReceivedAsync);
 				}
+			}
+			else
+			{
+				context.Wait(MessageReceivedAsync);
 			}
 		}
 
