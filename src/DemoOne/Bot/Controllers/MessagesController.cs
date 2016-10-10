@@ -7,6 +7,7 @@ using System.Web.Http;
 using System.Web.Http.Description;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace DemoOne
 {
@@ -31,7 +32,7 @@ namespace DemoOne
 					await connector.Conversations.ReplyToActivityAsync(typingActivity);
 
 					// Remove the mention from the activity text
-					var cityName = activity.Text.ToUpper().Replace("@" + activity.Recipient.Name.ToUpper(), string.Empty).Trim();
+					var cityName = activity.RemoveRecipientMention();
 
 					var locatorService = new GeoLocatorService.GeoService();
 					var matches = await locatorService.FindCoordinates(cityName);
@@ -40,6 +41,22 @@ namespace DemoOne
 					{
 						var weather = new WeatherService.WeatherService();
 						var current = await weather.GetCurrentConditions(matches[0].Latitude, matches[0].Longitude);
+						
+						var hero = new HeroCard("I am a hero!");
+						hero.Subtitle = "Subtitle";
+						hero.Text = "text";
+						var action = new CardAction();
+						action.Type = ActionTypes.PostBack;
+						action.Value = "hello @bot1";
+						action.Title = "press me";
+						hero.Buttons = new List<CardAction>();
+						hero.Buttons.Add(action);
+
+						var heroReply = activity.CreateReply();
+						heroReply.Attachments = new List<Attachment>();
+						heroReply.Attachments.Add(hero.ToAttachment());
+						heroReply.TopicName = "hero reply";
+						await connector.Conversations.ReplyToActivityAsync(heroReply);
 
 						var reply = activity.CreateReply($"The current conditions for {matches[0].CityState} are {current.Summary} and {current.CurrentTemp}.");
 
