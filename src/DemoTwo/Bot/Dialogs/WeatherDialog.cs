@@ -23,7 +23,7 @@ namespace DemoTwo.Dialogs
 			var message = await argument;
 			var activityMessage = message as Activity;
 
-			if (activityMessage.MentionsRecipient())
+			if (activityMessage.MentionsRecipient() || message.Conversation.IsGroup == false)
 			{
 				var geo = new GeoLocatorService.GeoService();
 				var matches = await geo.FindCoordinates(activityMessage.RemoveRecipientMention());
