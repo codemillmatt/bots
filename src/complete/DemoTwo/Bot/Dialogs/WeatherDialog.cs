@@ -6,12 +6,17 @@ using System.Web;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
 using WeatherService;
+using GeoLocatorService;
+using Autofac;
 
 namespace DemoTwo.Dialogs
 {
 	[Serializable]
 	public class WeatherDialog : IDialog<object>
 	{
+        //IGeoService _geoService;
+        //IWeatherService _weatherService;
+
 		public async Task StartAsync(IDialogContext context)
 		{
 			context.Wait(MessageReceivedAsync);
@@ -25,23 +30,27 @@ namespace DemoTwo.Dialogs
 
 			if (activityMessage.MentionsRecipient() || message.Conversation.IsGroup == false)
 			{
-				var geo = new GeoLocatorService.GeoService();
-				var matches = await geo.FindCoordinates(activityMessage.RemoveRecipientMention());
+                using (var scope = WebApiApplication.Container.BeginLifetimeScope())
+                {
+                    var _geoService = scope.Resolve<IGeoService>();
+                    var matches = await _geoService.FindCoordinates(activityMessage.RemoveRecipientMention());
 
-				if (matches.Count > 1)
-				{
-					await context.Forward(new LocationDialog(), LocationPicked, matches, new System.Threading.CancellationToken());
-				}
-				else if (matches.Count == 1)
-				{
-					await DisplayWeather(context, matches[0]);
-					context.Wait(MessageReceivedAsync);
-				}
-				else
-				{
-					await context.PostAsync($"Could not find the weather for {activityMessage.RemoveRecipientMention()}");
-					context.Wait(MessageReceivedAsync);
-				}
+
+                    if (matches.Count > 1)
+                    {
+                        await context.Forward(new LocationDialog(), LocationPicked, matches, new System.Threading.CancellationToken());
+                    }
+                    else if (matches.Count == 1)
+                    {
+                        await DisplayWeather(context, matches[0]);
+                        context.Wait(MessageReceivedAsync);
+                    }
+                    else
+                    {
+                        await context.PostAsync($"Could not find the weather for {activityMessage.RemoveRecipientMention()}");
+                        context.Wait(MessageReceivedAsync);
+                    }
+                }
 			}
 			else
 			{
@@ -65,12 +74,18 @@ namespace DemoTwo.Dialogs
 
 		async Task DisplayWeather(IDialogContext context, GeoLocatorService.CoordinateInfo coord)
 		{
-			var weatherService = new WeatherService.WeatherService();
-			var forecast = await weatherService.GetCurrentConditions(coord.Latitude, coord.Longitude);
+            using (var scope = WebApiApplication.Container.BeginLifetimeScope())
+            {
+                var _weatherService = scope.Resolve<IWeatherService>();
+                 
+                var forecast = await _weatherService.GetCurrentConditions(coord.Latitude, coord.Longitude);
 
-			await context.PostAsync($"The current conditions for {coord.CityState} are {forecast.Summary} and {forecast.CurrentTemp}.");
+                await context.PostAsync($"The current conditions for {coord.CityState} are {forecast.Summary} and {forecast.CurrentTemp}.");
+            }
 		}
 
-		#endregion
-	}
+        #endregion
+
+
+    }
 }

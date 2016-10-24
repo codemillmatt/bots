@@ -8,12 +8,23 @@ using System.Web.Http.Description;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using GeoLocatorService;
+using WeatherService;
 
 namespace DemoOne
 {
 	[BotAuthentication]
 	public class MessagesController : ApiController
 	{
+        IGeoService _geoService;
+        IWeatherService _weatherService;
+
+        public MessagesController(IGeoService geo, IWeatherService weather)
+        {
+            _geoService = geo;
+            _weatherService = weather;
+        }
+
 		/// <summary>
 		/// POST: api/Messages
 		/// Receive a message from a user and reply to it
@@ -34,8 +45,7 @@ namespace DemoOne
 					// Remove the mention from the activity text
 					var cityName = activity.RemoveRecipientMention();
 
-					var locatorService = new GeoLocatorService.GeoService();
-					var matches = await locatorService.FindCoordinates(cityName);
+					var matches = await _geoService.FindCoordinates(cityName);
 
 					if (matches.Count == 0)
 					{
@@ -43,8 +53,7 @@ namespace DemoOne
 					}
 					else if (matches.Count == 1)
 					{
-						var weather = new WeatherService.WeatherService();
-						var current = await weather.GetCurrentConditions(matches[0].Latitude, matches[0].Longitude);
+						var current = await _weatherService.GetCurrentConditions(matches[0].Latitude, matches[0].Longitude);
 
 						var reply = activity.CreateReply($"The current conditions for {matches[0].CityState} are {current.Summary} and {current.CurrentTemp}.");
 

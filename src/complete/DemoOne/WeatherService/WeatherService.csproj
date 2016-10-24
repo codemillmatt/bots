@@ -72,6 +72,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FutureWeatherInfo.cs" />
+    <Compile Include="IWeatherService.cs" />
+    <Compile Include="OfflineWeatherService.cs" />
     <Compile Include="WeatherInfo.cs" />
     <Compile Include="WeatherService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
