@@ -9,7 +9,7 @@ using DarkSkyApi;
 
 namespace WeatherService
 {
-    public class WeatherService
+    public class WeatherService : IWeatherService
     {
         public enum PrecipitationTypes
         {

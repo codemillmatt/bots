@@ -10,12 +10,15 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using Microsoft.Bot.Builder.Dialogs;
 using DemoTwo.Dialogs;
+using WeatherService;
+using GeoLocatorService;
 
 namespace DemoTwo
 {
 	[BotAuthentication]
 	public class MessagesController : ApiController
 	{
+
 		/// <summary>
 		/// POST: api/Messages
 		/// Receive a message from a user and reply to it
@@ -24,7 +27,7 @@ namespace DemoTwo
 		{
 			if (activity.Type == ActivityTypes.Message)
 			{
-				await Conversation.SendAsync(activity, () => new WeatherDialog());
+                await Conversation.SendAsync(activity, () => new WeatherDialog());
 			}
 			else
 			{

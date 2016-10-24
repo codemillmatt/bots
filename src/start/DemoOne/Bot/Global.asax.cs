@@ -24,11 +24,11 @@ namespace DemoOne
             var config = GlobalConfiguration.Configuration;
             builder.RegisterApiControllers(Assembly.GetExecutingAssembly());
 
-            //builder.RegisterType<GeoService>().As<IGeoService>();
-            //builder.RegisterType<WeatherService.WeatherService>().As<IWeatherService>();
+            builder.RegisterType<GeoService>().As<IGeoService>();
+            builder.RegisterType<WeatherService.WeatherService>().As<IWeatherService>();
 
-            builder.RegisterType<OfflineGeoService>().As<IGeoService>();
-            builder.RegisterType<OfflineWeatherService>().As<IWeatherService>();
+            //builder.RegisterType<OfflineGeoService>().As<IGeoService>();
+            //builder.RegisterType<OfflineWeatherService>().As<IWeatherService>();
 
             var container = builder.Build();
             config.DependencyResolver = new AutofacWebApiDependencyResolver(container);
