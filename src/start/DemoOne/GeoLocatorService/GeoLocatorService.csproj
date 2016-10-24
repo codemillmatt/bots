@@ -49,7 +49,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="GeoService.cs" />
+    <Compile Include="IGeoService.cs" />
     <Compile Include="LocationCoordinates.cs" />
+    <Compile Include="OfflineGeoService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

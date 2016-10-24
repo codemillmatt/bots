@@ -7,7 +7,7 @@ using GeocodeSharp.Google;
 
 namespace GeoLocatorService
 {
-    public class GeoService
+    public class GeoService : IGeoService
     {
         public async Task<List<CoordinateInfo>> FindCoordinates(string locationName)
         {
