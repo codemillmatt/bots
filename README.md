@@ -1,5 +1,5 @@
-# bots
-Repo for talk on Microsoft's bot framework as given at Prairie.Code() on Oct 28, 2016 and CenDev UG on Dec 1, 2016.
+# I, For One, Welcome Our New Bot Overloads
+Repo for talk on Microsoft's Bot Framework as given at Prairie.Code() on Oct 28, 2016 and CenDev UG on Dec 1, 2016.
 
 ## Demo 1 - Simple Weather Bot
  * Simple example of having a bot get the weather for a particular city.
