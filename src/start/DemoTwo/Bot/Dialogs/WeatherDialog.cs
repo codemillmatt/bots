@@ -11,25 +11,25 @@ using Autofac;
 
 namespace DemoTwo.Dialogs
 {
-	[Serializable]
-	public class WeatherDialog : IDialog<object>
-	{
+    [Serializable]
+    public class WeatherDialog : IDialog<object>
+    {
         //IGeoService _geoService;
         //IWeatherService _weatherService;
 
-		public async Task StartAsync(IDialogContext context)
-		{
-			context.Wait(MessageReceivedAsync);
-		}
+        public async Task StartAsync(IDialogContext context)
+        {
+            context.Wait(MessageReceivedAsync);
+        }
 
-		public async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> argument)
-		{
-			// Get the message out
-			var message = await argument;
-			var activityMessage = message as Activity;
+        public async Task MessageReceivedAsync(IDialogContext context, IAwaitable<IMessageActivity> argument)
+        {
+            // Get the message out
+            var message = await argument;
+            var activityMessage = message as Activity;
 
-			if (activityMessage.MentionsRecipient() || message.Conversation.IsGroup == false)
-			{
+            if (activityMessage.MentionsRecipient())
+            {
                 using (var scope = WebApiApplication.Container.BeginLifetimeScope())
                 {
                     var _geoService = scope.Resolve<IGeoService>();
@@ -51,38 +51,38 @@ namespace DemoTwo.Dialogs
                         context.Wait(MessageReceivedAsync);
                     }
                 }
-			}
-			else
-			{
-				context.Wait(MessageReceivedAsync);
-			}
-		}
+            }
+            else
+            {
+                context.Wait(MessageReceivedAsync);
+            }
+        }
 
-		// Callback for when a location has been picked
-		public async Task LocationPicked(IDialogContext context, IAwaitable<string> argument)
-		{
-			var location = await argument;
+        // Callback for when a location has been picked
+        public async Task LocationPicked(IDialogContext context, IAwaitable<string> argument)
+        {
+            var location = await argument;
 
-			var geo = new GeoLocatorService.GeoService();
-			var city = (await geo.FindCoordinates(location)).First();
-			await DisplayWeather(context, city);
+            var geo = new GeoLocatorService.GeoService();
+            var city = (await geo.FindCoordinates(location)).First();
+            await DisplayWeather(context, city);
 
-			context.Wait(MessageReceivedAsync);
-		}
+            context.Wait(MessageReceivedAsync);
+        }
 
-		#region Find weather and display
+        #region Find weather and display
 
-		async Task DisplayWeather(IDialogContext context, GeoLocatorService.CoordinateInfo coord)
-		{
+        async Task DisplayWeather(IDialogContext context, GeoLocatorService.CoordinateInfo coord)
+        {
             using (var scope = WebApiApplication.Container.BeginLifetimeScope())
             {
                 var _weatherService = scope.Resolve<IWeatherService>();
-                 
+
                 var forecast = await _weatherService.GetCurrentConditions(coord.Latitude, coord.Longitude);
 
                 await context.PostAsync($"The current conditions for {coord.CityState} are {forecast.Summary} and {forecast.CurrentTemp}.");
             }
-		}
+        }
 
         #endregion
 

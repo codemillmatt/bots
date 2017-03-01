@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GeocodeSharp.Google;
+using GeocodeSharp;
+using System.Net;
 
 namespace GeoLocatorService
 {
@@ -13,7 +15,7 @@ namespace GeoLocatorService
         {
             var locationResults = new List<CoordinateInfo>();
 
-            var client = new GeocodeClient();
+            var client = new GeocodeClient(new OldGoogleForwarderProxy(), "");
 
             // we only want US addresses
             var countryFilter = new ComponentFilter()
@@ -45,6 +47,17 @@ namespace GeoLocatorService
             }
 
             return locationResults;
+        }
+
+
+        internal class OldGoogleForwarderProxy : IGeocodeProxyProvider
+        {
+            public HttpWebRequest CreateRequest(string url)
+            {
+                url = $"{url}&new_forward_geocoder=false";
+
+                return WebRequest.CreateHttp(url);
+            }
         }
     }
 }

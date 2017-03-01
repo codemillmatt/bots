@@ -24,11 +24,11 @@ namespace DemoTwo
             var config = GlobalConfiguration.Configuration;
             builder.RegisterApiControllers(Assembly.GetExecutingAssembly());
 
-            //builder.RegisterType<GeoService>().As<IGeoService>();
-            //builder.RegisterType<WeatherService.WeatherService>().As<IWeatherService>();
+            builder.RegisterType<GeoService>().As<IGeoService>();
+            builder.RegisterType<WeatherService.WeatherService>().As<IWeatherService>();
 
-            builder.RegisterType<OfflineGeoService>().As<IGeoService>();
-            builder.RegisterType<OfflineWeatherService>().As<IWeatherService>();
+            //builder.RegisterType<OfflineGeoService>().As<IGeoService>();
+            //builder.RegisterType<OfflineWeatherService>().As<IWeatherService>();
 
             Container = builder.Build();
             config.DependencyResolver = new AutofacWebApiDependencyResolver(Container);
