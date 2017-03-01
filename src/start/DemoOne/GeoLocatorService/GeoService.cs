@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using GeocodeSharp.Google;
+using GeocodeSharp;
+using System.Net;
 
 namespace GeoLocatorService
 {
@@ -13,7 +15,7 @@ namespace GeoLocatorService
         {
             var locationResults = new List<CoordinateInfo>();
 
-            var client = new GeocodeClient();
+            var client = new GeocodeClient(new OldGoogleForwarderProxy(), "");
 
             // we only want US addresses
             var countryFilter = new ComponentFilter()
@@ -21,30 +23,46 @@ namespace GeoLocatorService
                 Country = "US"
             };
 
-            // Let Google figure out the geocoded address
-            var geocodedResults = await client.GeocodeAddress(locationName, null, countryFilter);
-
-            // Only do something if Google says we're OK
-            if (geocodedResults.Status == GeocodeStatus.Ok)
+            try
             {
-                // Make sure the results are based on a city name
-                var allCityResults = geocodedResults.Results.Where(gr => gr.PartialMatch == false && gr.Types.Any(t => t.Equals("locality")));
+                // Let Google figure out the geocoded address
+                var geocodedResults = await client.GeocodeAddress(locationName, null, countryFilter);
 
-                // Build up the locationResults list
-                foreach (var city in allCityResults)
+                // Only do something if Google says we're OK
+                if (geocodedResults.Status == GeocodeStatus.Ok)
                 {
-                    // Grab the lat & long
-                    var coordInfo = new CoordinateInfo() { Latitude = city.Geometry.Location.Latitude, Longitude = city.Geometry.Location.Longitude };
+                    // Make sure the results are based on a city name
+                    var allCityResults = geocodedResults.Results.Where(gr => gr.PartialMatch == false && gr.Types.Any(t => t.Equals("locality")));
 
-                    // Grab the city & state name out from the address component of the results
-                    coordInfo.CityName = city.AddressComponents.First(ac => ac.Types.Any(t => t.Equals("locality"))).ShortName;
-                    coordInfo.State = city.AddressComponents.First(ac => ac.Types.Any(t => t.Equals("administrative_area_level_1"))).ShortName;
+                    // Build up the locationResults list
+                    foreach (var city in allCityResults)
+                    {
+                        // Grab the lat & long
+                        var coordInfo = new CoordinateInfo() { Latitude = city.Geometry.Location.Latitude, Longitude = city.Geometry.Location.Longitude };
 
-                    locationResults.Add(coordInfo);
+                        // Grab the city & state name out from the address component of the results
+                        coordInfo.CityName = city.AddressComponents.First(ac => ac.Types.Any(t => t.Equals("locality"))).ShortName;
+                        coordInfo.State = city.AddressComponents.First(ac => ac.Types.Any(t => t.Equals("administrative_area_level_1"))).ShortName;
+
+                        locationResults.Add(coordInfo);
+                    }
                 }
+            } catch (Exception ex)
+            {
+                var s = ex.ToString();
             }
 
             return locationResults;
+        }
+    }
+
+    internal class OldGoogleForwarderProxy : IGeocodeProxyProvider
+    {
+        public HttpWebRequest CreateRequest(string url)
+        {
+            url = $"{url}&new_forward_geocoder=false";
+
+            return WebRequest.CreateHttp(url);
         }
     }
 }
